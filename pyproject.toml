@@ -1,44 +1,63 @@
 [project]
-name = "agent-memory"
+name = "agnostic-obsidian"
 version = "0.1.0"
-description = "Universal agent memory layer with persistent memory, lifecycle hooks, and semantic search"
-authors = [{name = "Micap AI", email = "info@micap.ai"}]
+description = "Universal AI agent memory layer — vault + palace + temporal knowledge graph"
 readme = "README.md"
-license = "MIT"
+license = {text = "MIT"}
 requires-python = ">=3.10"
-keywords = ["ai", "agents", "memory", "persistent-memory", "agent-framework"]
+authors = [
+    {name = "Micap AI", email = "info@micap.ai"},
+]
+keywords = [
+    "ai", "memory", "agent", "llm", "rag", "vector-database",
+    "mcp", "claude", "openclaw", "coddex", "gemini-cli",
+    "knowledge-graph", "temporal", "obsidian", "vault",
+]
+
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Intended Audience :: Developers",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
 dependencies = [
     "numpy>=1.24.0",
     "sentence-transformers>=2.2.0",
-    "torch>=2.0.0",
-    "qdrant-client>=1.15.0",
-    "chromadb>=0.4.0",
-    "redis>=5.0.0",
-    "python-frontmatter>=1.1.0",
-    "watchdog>=3.0.0",
     "typer>=0.9.0",
     "rich>=13.0.0",
+    "python-frontmatter>=1.1.0",
+    "watchdog>=3.0.0",
 ]
 
 [project.optional-dependencies]
-dev = [
-    "pytest>=7.0.0",
-    "pytest-asyncio>=0.21.0",
-    "black>=23.0.0",
-    "ruff>=0.1.0",
+dev = ["pytest>=7.0.0", "pytest-asyncio>=0.21.0", "black>=23.0.0", "ruff>=0.1.0"]
+mcp = []  # MCP protocol built-in
+all = [
+    "chromadb>=0.4.0",
+    "numpy>=1.24.0",
+    "sentence-transformers>=2.2.0",
+    "typer>=0.9.0",
+    "rich>=13.0.0",
+    "python-frontmatter>=1.1.0",
+    "watchdog>=3.0.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/micap-ai/agnostic-obsidian"
+Repository = "https://github.com/micap-ai/agnostic-obsidian"
+Documentation = "https://github.com/micap-ai/agnostic-obsidian#readme"
+"Bug Tracker" = "https://github.com/micap-ai/agnostic-obsidian/issues"
+
 [project.scripts]
-agent-memory = "agent_memory.cli:main"
+ao = "agnostic_obsidian.cli:main"
+ao-mcp = "agnostic_obsidian.mcp_server:main"
 
 [build-system]
 requires = ["setuptools>=61.0"]

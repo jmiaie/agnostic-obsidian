@@ -1,96 +1,114 @@
-# CLAUDE.md — agent-memory
+# CLAUDE.md — AgnosticObsidian
 
-You are building a Python package called **agent-memory** — a universal agent memory layer.
+You are building **AgnosticObsidian** — a universal AI agent memory layer.
 
 ## What It Does
 
-Gives any AI agent persistent memory across sessions with:
-- **Lifecycle hooks**: session_start, user_message, post_tool, pre_compact, stop
-- **Message classification**: 15 types (DECISION, INCIDENT, WIN, QUESTION, etc.) with routing hints
-- **Semantic search**: local embeddings via sentence-transformers (zero API cost)
-- **Structured vault**: brain/, work/, org/, perf/ organization
+Gives any AI agent persistent memory with:
+- **Vault** (obsidian-mind conventions): brain/work/org/perf folders, wikilinks, frontmatter
+- **Palace** (MemPalace): wings/rooms/closets/drawers metadata layer
+- **Knowledge Graph**: temporal SQLite triples with validity windows
+- **5 Lifecycle hooks**: session_start, user_message, post_tool, pre_compact, stop
+- **15 Message types**: with routing hints (DECISION, INCIDENT, WIN, etc.)
+- **Semantic search**: local sentence-transformers (zero API cost)
+- **MCP server**: 15+ tools via Model Context Protocol
 
 ## Package Structure
 
 ```
-agent_memory/
-├── __init__.py        # Public API exports
-├── core.py            # AgentMemory main class
-├── vault.py           # Vault management, Note class
-├── hooks.py           # 5 lifecycle hooks + HookManager
-├── classifier.py      # Message classification (15 types)
-├── semantic.py        # Semantic search index
-└── cli.py             # typer CLI (init, session-start, classify, search, etc.)
+agnostic_obsidian/
+├── __init__.py          # Public API exports
+├── core.py               # AgnosticObsidian main class
+├── vault.py              # Vault management
+├── palace.py             # Palace metadata (wings/rooms/closets/drawers)
+├── knowledge_graph.py     # Temporal KG (SQLite triples)
+├── hooks.py              # 5 lifecycle hooks + HookManager
+├── classifier.py         # 15 message types + multilingual
+├── semantic.py           # Local semantic search
+├── mcp_server.py         # MCP protocol server (15+ tools)
+└── cli.py                # typer CLI (14 commands)
 ```
 
 ## Key APIs
 
 ```python
-from agent_memory import AgentMemory
+from agnostic_obsidian import AgnosticObsidian
 
-memory = AgentMemory(vault_path="./workspace")
+ao = AgnosticObsidian(vault_path="./workspace")
 
-# Lifecycle hooks
-result = memory.session_start()  # ~2K tokens context
-result = memory.handle_message("We decided to defer Redis to Q2")  # ~100 tokens
-result = memory.post_tool("write", {"file_path": "work/active/auth.md"})
-result = memory.pre_compact(transcript)
-memory.stop()  # wrap-up
+# Lifecycle
+result = ao.session_start()    # ~2K tokens
+result = ao.handle_message(msg) # ~100 tokens
+ao.post_tool("write", {"file_path": "work/active/auth.md"})
+ao.stop()
 
-# Classification
-c = memory.classify("We won the client deal!")
-# c.message_type → WIN, c.routing_hints → ["Add to perf/Brag Doc.md", ...]
+# Palace
+ao.palace.list_wings()
+ao.palace.create_tunnel("Kai", "Orion", "auth-migration")
+
+# KG
+ao.kg.add_triple("Kai", "works_on", "Orion", valid_from="2025-06-01")
+ao.kg.query_entity("Kai")
 
 # Search
-results = memory.search("what did we decide about caching")
+ao.search("authentication", wing="Orion", room="auth-migration")
+```
+
+## MCP Server
+
+```bash
+# Claude Desktop
+claude mcp add agnostic-obsidian -- python -m agnostic_obsidian.mcp_server
+
+# Tools available:
+# ao_session_start, ao_classify, ao_search, ao_kg_query,
+# ao_kg_add, ao_kg_stats, ao_palace_wings, ao_palace_rooms,
+# ao_palace_tunnel, ao_validate, ao_wrap_up, ao_status, ao_orphans, ao_init
 ```
 
 ## Architecture Decisions
 
-- **Lazy model loading**: SemanticIndex._model is loaded on first access, not at __init__
-- **Graceful fallbacks**: If frontmatter parsing fails, read raw content
-- **Token budgets per hook**: session_start=2000, user_message=100, post_tool=200, stop=500
-- **Framework-agnostic**: No OpenClaw, Claude Code, or any agent framework deps — works with anything
+1. **Lazy semantic loading**: `SemanticIndex._model` loaded on first access
+2. **Framework-agnostic**: Pure Python, no agent SDK deps
+3. **Vault + Palace dual-layer**: Vault=source of truth, Palace=retrieval acceleration
+4. **Verbatim storage**: No summarization (proven 96.6% R@5 by MemPalace)
+5. **Temporal KG**: SQLite triples with validity windows
 
 ## Development
 
 ```bash
-# Install
-pip install -e ".[dev]"
+pip install -e ".[all]"   # Install with all deps
+pip install -e ".[dev]"   # Dev deps
 
 # Run tests
-pytest
-
-# Build
-python -m build
+PYTHONPATH=. python3 /tmp/test_ao.py
 
 # CLI
-agent-memory --help
-agent-memory classify "your message here"
+ao init
+ao status
+ao classify "message"
+ao wings
+ao kg-query "Entity"
 ```
 
-## Adding New Message Types
+## Adding Message Types
 
-1. Add to `MessageType` enum in `classifier.py`
-2. Add patterns to `PATTERNS` dict (regex list)
-3. Add routing hints to `ROUTING_HINTS` dict
-4. Add folder to `FOLDER_MAP`
-5. Add action to `_get_action()` method
+1. Add enum to `MessageType` in `classifier.py`
+2. Add regex patterns to `PATTERNS[MessageType]`
+3. Add routing hints to `ROUTING_HINTS[MessageType]`
+4. Add folder to `FOLDER_MAP[MessageType]`
 
 ## Adding Custom Hooks
 
 ```python
-from agent_memory.hooks import Hook, HookContext, HookResult
+from agnostic_obsidian.hooks import Hook, HookContext, HookResult
 
 class MyHook(Hook):
+    def __init__(self):
+        super().__init__("my_hook", token_budget=50)
     def execute(self, context: HookContext) -> HookResult:
-        return HookResult(
-            hook_name="my_hook",
-            success=True,
-            output="custom output",
-            tokens_hint=50
-        )
+        return HookResult(hook_name=self.name, success=True, output="...", tokens_hint=50)
 
-memory = AgentMemory("./workspace")
-memory.hooks.register_hook("my_hook", MyHook())
+ao = AgnosticObsidian("./workspace")
+ao.hooks.register_hook("my_hook", MyHook())
 ```
