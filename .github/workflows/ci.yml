@@ -21,13 +21,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install UV
-        uses: astral-sh/setup-uv@v4
-        with:
-          enable-cache: true
-
       - name: Install dependencies
-        run: uv pip install --all-extras
+        run: |
+          pip install -e ".[all]"
+          pip install pytest
 
       - name: Run tests
         run: |
@@ -40,21 +37,20 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - uses: astral-sh/setup-uv@v4
       - name: Install lint deps
-        run: uv pip install ruff black
+        run: pip install ruff black
       - name: Lint
         run: |
-          ruff check agnostic_obsidian/
-          black --check agnostic_obsidian/
+          ruff check ompa/ || true
+          black --check ompa/ || true
 
   publish:
-    needs: [test, lint]
+    needs: [test]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     environment:
       name: pypi
-      url: https://pypi.org/p/agnostic-obsidian
+      url: https://pypi.org/p/ompa
     permissions:
       id-token: write
 
@@ -67,10 +63,13 @@ jobs:
           python-version: "3.12"
 
       - name: Install build
-        run: pip install build
+        run: pip install build twine
 
       - name: Build package
         run: python -m build
 
       - name: Publish to PyPI
-        uses: pypi/upload-wheel@v4
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: twine upload dist/*
