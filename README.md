@@ -4,6 +4,9 @@
 
 OMPA gives any AI agent persistent memory with vault conventions, palace navigation, and a temporal knowledge graph.
 
+
+> **Canonical remote:** [`jmiaie/ompa`](https://github.com/jmiaie/ompa) — this `agnostic-obsidian` GitHub name is a **historical / portfolio mirror**. See [`STATUS.md`](STATUS.md). Prefer installing/publishing from **ompa**.
+
 ## Credits & Attribution
 
 This project is a synthesis of ideas and code from the AI agent memory community:
